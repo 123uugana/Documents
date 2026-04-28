@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Lady Riders Mongolia community website">
+  <title>Lady Riders Mongolia</title>
+  <link rel="icon" href="./logo.jpg" type="image/jpeg">
+  <link rel="preconnect" href="https://images.unsplash.com">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="#home" aria-label="Lady Riders Mongolia home">
+      <img src="./logo.jpg" alt="" class="logo-mark" data-logo-image>
+      <span>Lady Riders</span>
+    </a>
+
+    <nav id="navMenu" class="site-nav" aria-label="Primary navigation">
+      <a href="#features">Онцлог</a>
+      <a href="#about">Бидний тухай</a>
+      <a href="#stats">Тоон үзүүлэлт</a>
+      <a href="#gallery">Зураг</a>
+      <a href="#contact">Холбоо барих</a>
+      <a href="#membership">Анкет</a>
+    </nav>
+
+    <button id="menuBtn" class="icon-button" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
+      <span aria-hidden="true">☰</span>
+    </button>
+  </header>
+
+  <main>
+    <section id="home" class="hero" aria-labelledby="heroTitle">
+      <div class="hero-content">
+        <img src="./logo.jpg" alt="Lady Riders Mongolia logo" class="hero-logo" data-logo-image>
+        <p class="eyebrow">Mongolia women rider community</p>
+        <h1 id="heroTitle">Lady Riders Mongolia</h1>
+        <p class="hero-copy">Зам, нөхөрлөл, өөртөө итгэх итгэлээ хамтдаа бүтээдэг эмэгтэй мото сонирхогчдын нэгдэл.</p>
+        <a class="button-link" href="#membership">Анкет бөглөх</a>
+      </div>
+    </section>
+
+    <section id="features" class="section" aria-labelledby="featuresTitle">
+      <div class="section-heading">
+        <p class="eyebrow">What we do</p>
+        <h2 id="featuresTitle">Онцлог</h2>
+      </div>
+
+      <form id="featureForm" class="add-box" autocomplete="off">
+        <input id="featureTitle" name="featureTitle" placeholder="Гарчиг" aria-label="Feature title">
+        <input id="featureText" name="featureText" placeholder="Тайлбар" aria-label="Feature text">
+        <button type="submit">Нэмэх</button>
+      </form>
+
+      <div id="featureList" class="cards" aria-live="polite"></div>
+    </section>
+
+    <section id="about" class="section section-alt" aria-labelledby="aboutTitle">
+      <div class="section-heading">
+        <p class="eyebrow">Community</p>
+        <h2 id="aboutTitle">Бидний тухай</h2>
+      </div>
+
+      <form id="aboutForm" class="add-box" autocomplete="off">
+        <input id="aboutInput" name="aboutInput" placeholder="Текст нэмэх" aria-label="About text">
+        <button type="submit">Нэмэх</button>
+      </form>
+
+      <div id="aboutList" class="cards" aria-live="polite"></div>
+    </section>
+
+    <section id="stats" class="section" aria-labelledby="statsTitle">
+      <div class="section-heading">
+        <p class="eyebrow">Momentum</p>
+        <h2 id="statsTitle">Тоон үзүүлэлт</h2>
+      </div>
+
+      <div class="stats-grid">
+        <article class="stat-card">
+          <span class="stat-icon" aria-hidden="true">👥</span>
+          <strong id="memberCount">0+</strong>
+          <span>Гишүүд</span>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-icon" aria-hidden="true">📅</span>
+          <strong id="eventCount">0+</strong>
+          <span>Эвент</span>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-icon" aria-hidden="true">📍</span>
+          <strong id="tripCount">0+</strong>
+          <span>Аялал</span>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-icon" aria-hidden="true">♡</span>
+          <strong id="communityCount">1</strong>
+          <span>Нэгдэл</span>
+        </article>
+      </div>
+
+      <div class="add-box compact-actions" aria-label="Stats actions">
+        <button type="button" id="addEventBtn">+ Эвент</button>
+        <button type="button" id="addTripBtn">+ Аялал</button>
+        <button type="button" id="addCommunityBtn">+ Нэгдэл</button>
+        <button type="button" id="removeMemberBtn" class="secondary-button">- Гишүүн</button>
+      </div>
+    </section>
+
+    <section class="section section-alt" aria-labelledby="sayTitle">
+      <div class="section-heading">
+        <p class="eyebrow">Voices</p>
+        <h2 id="sayTitle">Гишүүдийн сэтгэгдэл</h2>
+      </div>
+
+      <form id="sayForm" class="add-box" autocomplete="off">
+        <input id="sayText" name="sayText" placeholder="Сэтгэгдэл" aria-label="Comment">
+        <input id="sayName" name="sayName" placeholder="Нэр" aria-label="Name">
+        <button type="submit">Нэмэх</button>
+      </form>
+
+      <div id="sayList" class="cards" aria-live="polite"></div>
+    </section>
+
+    <section id="gallery" class="section" aria-labelledby="galleryTitle">
+      <div class="section-heading">
+        <p class="eyebrow">Moments</p>
+        <h2 id="galleryTitle">Зургийн цомог</h2>
+      </div>
+
+      <div class="gallery-grid">
+        <figure class="gallery-item">
+          <img src="./lut.png" alt="Motorcycle rider on an open road" loading="lazy">
+          <figcaption>Зам дээрх эрх чөлөө</figcaption>
+        </figure>
+
+        <figure class="gallery-item">
+          <img src="./source.jpg" alt="Motorcycle parked during a ride" loading="lazy">
+          <figcaption>Хамтын аялал</figcaption>
+        </figure>
+
+        <figure class="gallery-item">
+          <img src="./biker.jpg" alt="Motorcycle close up" loading="lazy">
+          <figcaption>Rider lifestyle</figcaption>
+        </figure>
+
+        <figure class="gallery-item">
+          <img src="./lADY%20RIDERS.jpg" alt="Lady Riders Mongolia community" loading="lazy">
+          <figcaption>Lady Riders Mongolia</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="contact" class="section" aria-labelledby="contactTitle">
+      <div class="section-heading">
+        <p class="eyebrow">Connect</p>
+        <h2 id="contactTitle">Холбоо барих</h2>
+      </div>
+
+      <form id="contactForm" class="add-box" autocomplete="off">
+        <input id="phoneContact" name="phoneContact" placeholder="Утас" aria-label="Phone">
+        <input id="facebookContact" name="facebookContact" placeholder="Facebook" aria-label="Facebook">
+        <input id="instagramContact" name="instagramContact" placeholder="https://www.instagram.com/lady_riders_mongolia_wmc/" aria-label="Instagram">
+        <button type="submit">Хадгалах</button>
+      </form>
+
+      <address class="contact-card">
+        <p><strong>Утас:</strong> <span id="showPhone">-</span></p>
+        <p><strong>Facebook:</strong> <span id="showFacebook">-</span></p>
+        <p><strong>Instagram:</strong> <span id="showInstagram">-</span></p>
+      </address>
+    </section>
+
+    <section id="membership" class="section section-alt membership-section" aria-labelledby="membershipTitle">
+      <div class="membership-shell">
+        <div class="form-header">
+          <img src="./logo.jpg" alt="Lady Riders Mongolia logo" class="form-logo" data-logo-image>
+          <p class="eyebrow">Membership</p>
+          <h2 id="membershipTitle">Лэйди Райдэрс Мото Клубт элсэх анкет</h2>
+          <p class="form-subtitle">Lady Riders Mongolia Women Motorcycle Club</p>
+
+          <div class="form-notice">
+            <strong>Санамж</strong>
+            <p>Анкетыг бөглөхдөө бүх асуултад товч, тодорхой хариулна уу. Таны хувийн мэдээллийг зөвхөн гишүүнчлэлийн зорилгоор ашиглана.</p>
+          </div>
+        </div>
+
+        <form id="membershipForm" class="membership-form" autocomplete="on">
+          <div class="form-section-card">
+            <h3>I. Товч танилцуулга</h3>
+
+            <div class="form-row">
+              <label class="form-group" for="lastName">
+                <span>Эцэг, эхийн нэр <b>*</b></span>
+                <input type="text" id="lastName" name="lastName" required>
+              </label>
+
+              <label class="form-group" for="firstName">
+                <span>Өөрийн нэр <b>*</b></span>
+                <input type="text" id="firstName" name="firstName" required>
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label class="form-group" for="gender">
+                <span>Хүйс <b>*</b></span>
+                <select id="gender" name="gender" required>
+                  <option value="">Сонгоно уу</option>
+                  <option value="Эмэгтэй">Эмэгтэй</option>
+                  <option value="Бусад">Бусад</option>
+                </select>
+              </label>
+
+              <label class="form-group" for="birthDate">
+                <span>Төрсөн огноо <b>*</b></span>
+                <input type="date" id="birthDate" name="birthDate" required>
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label class="form-group" for="birthPlace">
+                <span>Төрсөн аймаг, хот <b>*</b></span>
+                <input type="text" id="birthPlace" name="birthPlace" required>
+              </label>
+
+              <label class="form-group" for="registerId">
+                <span>Регистрийн дугаар <b>*</b></span>
+                <input type="text" id="registerId" name="registerId" placeholder="АА00000000" required>
+              </label>
+            </div>
+
+            <label class="form-group" for="address">
+              <span>Гэрийн хаяг <b>*</b></span>
+              <textarea id="address" name="address" rows="3" required></textarea>
+            </label>
+
+            <div class="form-row">
+              <label class="form-group" for="homePhone">
+                <span>Утас (гэр)</span>
+                <input type="tel" id="homePhone" name="homePhone" placeholder="70000000">
+              </label>
+
+              <label class="form-group" for="mobilePhone">
+                <span>Утас (гар) <b>*</b></span>
+                <input type="tel" id="mobilePhone" name="mobilePhone" placeholder="99000000" required>
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label class="form-group" for="workPhone">
+                <span>Утас (ажил)</span>
+                <input type="tel" id="workPhone" name="workPhone" placeholder="11000000">
+              </label>
+
+              <label class="form-group" for="otherPhone">
+                <span>Утас (бусад)</span>
+                <input type="tel" id="otherPhone" name="otherPhone">
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label class="form-group" for="email">
+                <span>И-мэйл <b>*</b></span>
+                <input type="email" id="email" name="email" placeholder="example@email.com" required>
+              </label>
+
+              <label class="form-group" for="socialMedia">
+                <span>Social media хаяг</span>
+                <input type="text" id="socialMedia" name="socialMedia" placeholder="Facebook, Instagram гэх мэт">
+              </label>
+            </div>
+          </div>
+
+          <div class="form-section-card">
+            <h3>II. Мотоциклын мэдээлэл</h3>
+
+            <div class="form-row">
+              <label class="form-group" for="licenseA">
+                <span>“A” ангилалтай эсэх <b>*</b></span>
+                <select id="licenseA" name="licenseA" required>
+                  <option value="">Сонгоно уу</option>
+                  <option value="Тийм">Тийм</option>
+                  <option value="Үгүй">Үгүй</option>
+                </select>
+              </label>
+
+              <label class="form-group" for="ridingStartDate">
+                <span>Мотоцикл унаж эхэлсэн огноо <b>*</b></span>
+                <input type="date" id="ridingStartDate" name="ridingStartDate" required>
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label class="form-group" for="motorcycleBrand">
+                <span>Одоогоор унаж буй мотоциклийн нэр <b>*</b></span>
+                <input type="text" id="motorcycleBrand" name="motorcycleBrand" placeholder="Honda CB500X, Yamaha MT-07" required>
+              </label>
+
+              <label class="form-group" for="licensePlate">
+                <span>Улсын дугаар <b>*</b></span>
+                <input type="text" id="licensePlate" name="licensePlate" placeholder="УБ0000" required>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-section-card">
+            <h3>III. Нэмэлт мэдээлэл</h3>
+
+            <label class="form-group" for="ridingExperience">
+              <span>Унадаг явдалын туршлага</span>
+              <textarea id="ridingExperience" name="ridingExperience" rows="3" placeholder="Хэдэн жил унадаг, ямар төрлийн зам туулж байсан гэх мэт"></textarea>
+            </label>
+
+            <label class="form-group" for="whyJoin">
+              <span>Яагаад клубт элсэхийг хүсч байна вэ?</span>
+              <textarea id="whyJoin" name="whyJoin" rows="3" placeholder="Таны санаа бодлоо хуваалцана уу"></textarea>
+            </label>
+
+            <label class="form-group" for="skills">
+              <span>Онцлог ур чадвар</span>
+              <textarea id="skills" name="skills" rows="2" placeholder="Засвар, зураг авалт, зохион байгуулалт гэх мэт"></textarea>
+            </label>
+
+            <fieldset class="choice-group">
+              <legend>Хэдэн удаа мото унах боломжтой вэ?</legend>
+              <label><input type="radio" name="ridingFrequency" value="Өдөр бүр"> <span>Өдөр бүр</span></label>
+              <label><input type="radio" name="ridingFrequency" value="Долоо хоногт 2-3 удаа"> <span>Долоо хоногт 2-3 удаа</span></label>
+              <label><input type="radio" name="ridingFrequency" value="Амралтын өдрүүдэд"> <span>Амралтын өдрүүдэд</span></label>
+              <label><input type="radio" name="ridingFrequency" value="Сард 1-2 удаа"> <span>Сард 1-2 удаа</span></label>
+            </fieldset>
+
+            <label class="form-group" for="emergencyContact">
+              <span>Яаралтай үед холбоо барих хүн</span>
+              <input type="text" id="emergencyContact" name="emergencyContact" placeholder="Нэр, утас">
+            </label>
+
+            <div class="form-row">
+              <label class="form-group file-field" for="profilePhoto">
+                <span>Профайл зураг</span>
+                <input type="file" id="profilePhoto" name="profilePhoto" accept="image/*">
+                <small>JPG, PNG зураг сонгоно уу.</small>
+              </label>
+
+              <label class="form-group file-field" for="motorcyclePhoto">
+                <span>Мотоциклийн зураг</span>
+                <input type="file" id="motorcyclePhoto" name="motorcyclePhoto" accept="image/*">
+                <small>JPG, PNG зураг сонгоно уу.</small>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-section-card">
+            <h3>IV. Зөвшөөрөл</h3>
+
+            <fieldset class="choice-group consent-group">
+              <legend>Баталгаажуулалт</legend>
+              <label><input type="checkbox" name="privacyAgreed" required> <span>Би хувийн мэдээллээ Lady Riders Mongolia WMC-д өгөхийг зөвшөөрч байна. <b>*</b></span></label>
+              <label><input type="checkbox" name="rulesAgreed" required> <span>Би клубын дүрэм, зарчмыг дагаж мөрдөхийг зөвшөөрч байна. <b>*</b></span></label>
+              <label><input type="checkbox" name="photoAgreed"> <span>Клубын үйл ажиллагаанд миний зураг ашиглахыг зөвшөөрч байна.</span></label>
+            </fieldset>
+
+            <div class="form-row">
+              <label class="form-group" for="signature">
+                <span>Цахим гарын үсэг <b>*</b></span>
+                <input type="text" id="signature" name="signature" placeholder="Бүтэн нэрээ бичнэ үү" required>
+              </label>
+
+              <label class="form-group" for="signatureDate">
+                <span>Огноо <b>*</b></span>
+                <input type="date" id="signatureDate" name="signatureDate" required>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit">Анкет илгээх</button>
+            <button type="reset" class="secondary-button">Дахин эхлүүлэх</button>
+          </div>
+
+          <p id="membershipMessage" class="membership-message" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+    <form id="joinForm" class="modal-content" autocomplete="off">
+      <button class="close-button" type="button" data-close-modal aria-label="Close">×</button>
+      <h2 id="modalTitle">Нэгдэх хүсэлт</h2>
+      <input id="name" name="name" placeholder="Нэр" aria-label="Name" required>
+      <input id="phone" name="phone" placeholder="Утас" aria-label="Phone" required>
+      <input id="bike" name="bike" placeholder="Мотоцикл" aria-label="Bike" required>
+      <button type="submit">Илгээх</button>
+      <p id="formMessage" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+
+  <script type="module" src="./index.js"></script>
+</body>
+</html>
