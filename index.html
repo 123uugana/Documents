@@ -6,13 +6,13 @@
   <meta name="description" content="Lady Riders Mongolia community website">
   <title>Lady Riders Mongolia</title>
   <link rel="icon" href="./source.jpg" type="image/jpeg">
-  <link rel="preconnect" href="https://images.unsplash.com">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <header class="site-header">
     <a class="logo" href="#home" aria-label="Lady Riders Mongolia home">
-      <img src="./source.jpg" alt="" class="logo-mark" data-logo-image>
+      <!-- TODO: Confirm source.jpg usage rights before commercial sale. -->
+      <img src="./source.jpg" alt="Lady Riders Mongolia motorcycle community mark" class="logo-mark" data-logo-image>
       <span>Lady Riders</span>
     </a>
 
@@ -23,6 +23,7 @@
       <a href="#gallery">Зураг</a>
       <a href="#contact">Холбоо барих</a>
       <a href="#membership">Анкет</a>
+      <a href="./privacy.html">Privacy</a>
       <a id="authLink" href="./admin.html">Admin login</a>
       <button id="logoutBtn" class="nav-button" type="button" hidden>Logout</button>
     </nav>
@@ -35,7 +36,7 @@
   <main>
     <section id="home" class="hero" aria-labelledby="heroTitle">
       <div class="hero-content">
-        <img src="./source.jpg" alt="Lady Riders Mongolia logo" class="hero-logo" data-logo-image>
+        <img src="./source.jpg" alt="Lady Riders Mongolia motorcycle community logo" class="hero-logo" data-logo-image>
         <p class="eyebrow">Mongolia women rider community</p>
         <h1 id="heroTitle">Lady Riders Mongolia</h1>
         <p class="hero-copy">Зам, нөхөрлөл, өөртөө итгэх итгэлээ хамтдаа бүтээдэг эмэгтэй мото сонирхогчдын нэгдэл.</p>
@@ -135,22 +136,26 @@
 
       <div class="gallery-grid">
         <figure class="gallery-item">
-          <img src="./lut.png" alt="Motorcycle rider on an open road" loading="lazy">
+          <!-- TODO: Confirm lut.png usage rights before commercial sale. -->
+          <img src="./lut.png" alt="Motorcycle rider traveling on an open road" loading="lazy">
           <figcaption>Зам дээрх эрх чөлөө</figcaption>
         </figure>
 
         <figure class="gallery-item">
-          <img src="./source.jpg" alt="Motorcycle parked during a ride" loading="lazy">
+          <!-- TODO: Confirm source.jpg usage rights before commercial sale. -->
+          <img src="./source.jpg" alt="Motorcycle parked during a Lady Riders group ride" loading="lazy">
           <figcaption>Хамтын аялал</figcaption>
         </figure>
 
         <figure class="gallery-item">
-          <img src="./biker.jpg" alt="Motorcycle close up" loading="lazy">
+          <!-- TODO: Confirm biker.jpg usage rights before commercial sale. -->
+          <img src="./biker.jpg" alt="Close-up view of a motorcycle for rider lifestyle gallery" loading="lazy">
           <figcaption>Rider lifestyle</figcaption>
         </figure>
 
         <figure class="gallery-item">
-          <img src="./lADY%20RIDERS.jpg" alt="Lady Riders Mongolia community" loading="lazy">
+          <!-- TODO: Confirm lADY RIDERS.jpg usage rights before commercial sale. -->
+          <img src="./lADY%20RIDERS.jpg" alt="Lady Riders Mongolia community group moment" loading="lazy">
           <figcaption>Lady Riders Mongolia</figcaption>
         </figure>
       </div>
@@ -179,7 +184,7 @@
     <section id="membership" class="section section-alt membership-section" aria-labelledby="membershipTitle">
       <div class="membership-shell">
         <div class="form-header">
-          <img src="./source.jpg" alt="Lady Riders Mongolia logo" class="form-logo" data-logo-image>
+          <img src="./source.jpg" alt="Lady Riders Mongolia membership form logo" class="form-logo" data-logo-image>
           <p class="eyebrow">Membership</p>
           <h2 id="membershipTitle">Лэйди Райдэрс Мото Клубт элсэх анкет</h2>
           <p class="form-subtitle">Lady Riders Mongolia Women Motorcycle Club</p>
@@ -187,6 +192,12 @@
           <div class="form-notice">
             <strong>Санамж</strong>
             <p>Анкетыг бөглөхдөө бүх асуултад товч, тодорхой хариулна уу. Таны хувийн мэдээллийг зөвхөн гишүүнчлэлийн зорилгоор ашиглана.</p>
+          </div>
+
+          <div class="privacy-notice">
+            <strong>Privacy notice</strong>
+            <p>Таны утас, email, анкетын мэдээлэл болон upload хийсэн зургуудыг зөвхөн гишүүнчлэлийн хүсэлт шалгах зорилгоор ашиглана. Бид эдгээр мэдээллийг хамгаалж, зөвшөөрөлгүйгээр нийтэд тараахгүй.</p>
+            <a href="./privacy.html">Privacy policy унших</a>
           </div>
         </div>
 
@@ -387,6 +398,11 @@
       </div>
     </section>
   </main>
+
+  <footer class="site-footer">
+    <a href="./privacy.html">Privacy</a>
+    <small>Recommended domain: ladyridersmongolia.mn</small>
+  </footer>
 
   <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
     <form id="joinForm" class="modal-content" autocomplete="off">
