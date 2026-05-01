@@ -1,0 +1,43 @@
+{
+  "stats": {
+    "members": 0,
+    "events": 2,
+    "trips": 1,
+    "community": 2
+  },
+  "features": [
+    {
+      "id": "01180ba6-e2fd-436b-98fe-1f4ad5210323",
+      "title": "Хамтын аялал",
+      "text": "Хотын богино ride-аас эхлээд урт аялал хүртэл аюулгүй, зохион байгуулалттай хөдөлнө.",
+      "createdAt": "2026-05-01T17:00:11.167Z"
+    },
+    {
+      "id": "7a312caf-077c-481b-aca7-33d29f39b4a4",
+      "title": "Сургалт ба зөвлөгөө",
+      "text": "Шинэ rider-уудад хамгаалалт, техник, замын соёлын талаар туршлага хуваалцана.",
+      "createdAt": "2026-05-01T17:00:11.167Z"
+    },
+    {
+      "id": "0abf9ce2-8884-4f18-bd09-7d7393c1beee",
+      "title": "Дэмждэг орчин",
+      "text": "Нэгнээ урамшуулж, хамтдаа илүү итгэлтэй, илүү чадварлаг болдог community.",
+      "createdAt": "2026-05-01T17:00:11.167Z"
+    }
+  ],
+  "abouts": [
+    {
+      "id": "957b2464-f4d3-4a24-ab1f-4ceb295d381d",
+      "text": "Lady Riders Mongolia бол мото сонирхдог эмэгтэйчүүдийн нээлттэй, эерэг нэгдэл.",
+      "createdAt": "2026-05-01T17:00:11.167Z"
+    }
+  ],
+  "says": [],
+  "members": [],
+  "membershipApplications": [],
+  "contact": {
+    "phone": "-",
+    "facebook": "Lady Riders Mongolia",
+    "instagram": "https://www.instagram.com/lady_riders_mongolia_wmc/"
+  }
+}

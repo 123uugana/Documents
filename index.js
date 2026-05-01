@@ -1,49 +1,3 @@
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  appId: "YOUR_APP_ID"
-};
-
-const defaultState = {
-  stats: {
-    members: 0,
-    events: 0,
-    trips: 0,
-    community: 1
-  },
-  features: [
-    {
-      title: "Хамтын аялал",
-      text: "Хотын богино ride-аас эхлээд урт аялал хүртэл аюулгүй, зохион байгуулалттай хөдөлнө."
-    },
-    {
-      title: "Сургалт ба зөвлөгөө",
-      text: "Шинэ rider-уудад хамгаалалт, техник, замын соёлын талаар туршлага хуваалцана."
-    },
-    {
-      title: "Дэмждэг орчин",
-      text: "Нэгнээ урамшуулж, хамтдаа илүү итгэлтэй, илүү чадварлаг болдог community."
-    }
-  ],
-  abouts: [
-    {
-      text: "Lady Riders Mongolia бол мото сонирхдог эмэгтэйчүүдийн нээлттэй, эерэг нэгдэл."
-    }
-  ],
-  says: [
-    {
-      text: "Анхны аялалдаа ганцаараа биш гэдгээ мэдэрсэн нь хамгийн гоё байсан.",
-      name: "Саруул"
-    }
-  ],
-  contact: {
-    phone: "-",
-    facebook: "Lady Riders Mongolia",
-    instagram: "https://www.instagram.com/lady_riders_mongolia_wmc/"
-  }
-};
-
 const selectors = {
   modal: document.getElementById("modal"),
   navMenu: document.getElementById("navMenu"),
@@ -58,27 +12,20 @@ const selectors = {
   communityCount: document.getElementById("communityCount"),
   showPhone: document.getElementById("showPhone"),
   showFacebook: document.getElementById("showFacebook"),
-  showInstagram: document.getElementById("showInstagram")
+  showInstagram: document.getElementById("showInstagram"),
+  authLink: document.getElementById("authLink"),
+  logoutBtn: document.getElementById("logoutBtn")
 };
 
-const hasFirebaseConfig = Object.values(firebaseConfig).every((value) => {
-  return value && !value.startsWith("YOUR_") && !value.includes("YOUR_PROJECT");
-});
-
-let store;
+let state = null;
+let isAdmin = false;
 
 init();
 
 async function init() {
-  try {
-    store = hasFirebaseConfig ? await createFirebaseStore() : createLocalStore();
-  } catch (error) {
-    console.warn("Firebase unavailable, using local storage instead.", error);
-    store = createLocalStore();
-  }
-
   bindUi();
-  subscribeToData();
+  await checkAuth();
+  await loadData();
 }
 
 function bindUi() {
@@ -91,8 +38,9 @@ function bindUi() {
   selectors.modal.addEventListener("click", closeModalOnBackdrop);
   selectors.menuBtn.addEventListener("click", toggleMenu);
   selectors.navMenu.addEventListener("click", closeMenuOnLink);
+  selectors.logoutBtn?.addEventListener("click", logoutAdmin);
 
-  document.getElementById("joinForm").addEventListener("submit", submitForm);
+  document.getElementById("joinForm").addEventListener("submit", submitJoinForm);
   document.getElementById("featureForm").addEventListener("submit", addFeature);
   document.getElementById("aboutForm").addEventListener("submit", addAbout);
   document.getElementById("sayForm").addEventListener("submit", addSay);
@@ -112,12 +60,22 @@ function bindUi() {
   });
 }
 
-function subscribeToData() {
-  store.subscribeStats(renderStats);
-  store.subscribeList("features", (items) => renderCards(selectors.featureList, items, renderFeatureCard));
-  store.subscribeList("abouts", (items) => renderCards(selectors.aboutList, items, renderAboutCard));
-  store.subscribeList("says", (items) => renderCards(selectors.sayList, items, renderSayCard));
-  store.subscribeContact(renderContact);
+async function loadData() {
+  try {
+    state = await apiFetch("/api/data");
+    renderAll();
+  } catch (error) {
+    showLoadError(error);
+  }
+}
+
+function renderAll() {
+  updateAdminUi();
+  renderStats(state.stats);
+  renderContact(state.contact);
+  renderCards(selectors.featureList, state.features, renderFeatureCard);
+  renderCards(selectors.aboutList, state.abouts, renderAboutCard);
+  renderCards(selectors.sayList, state.says, renderSayCard);
 }
 
 function openModal() {
@@ -145,7 +103,7 @@ function toggleMenu() {
 }
 
 function closeMenuOnLink(event) {
-  if (event.target.matches("a")) {
+  if (event.target.matches("a, button")) {
     closeMenu();
   }
 }
@@ -156,7 +114,7 @@ function closeMenu() {
   selectors.menuBtn.setAttribute("aria-label", "Open menu");
 }
 
-async function submitForm(event) {
+async function submitJoinForm(event) {
   event.preventDefault();
 
   const form = event.currentTarget;
@@ -167,11 +125,13 @@ async function submitForm(event) {
     return;
   }
 
-  await store.addMember(member);
-  await store.updateStat("members", 1);
-
-  selectors.formMessage.textContent = "Амжилттай илгээгдлээ.";
-  form.reset();
+  try {
+    await createItem("members", member);
+    selectors.formMessage.textContent = "Амжилттай илгээгдлээ.";
+    form.reset();
+  } catch (error) {
+    selectors.formMessage.textContent = error.message;
+  }
 }
 
 async function addFeature(event) {
@@ -182,10 +142,11 @@ async function addFeature(event) {
 
   if (!item) return;
 
-  await store.addItem("features", {
+  await createItem("features", {
     title: item.featureTitle,
     text: item.featureText
   });
+
   form.reset();
 }
 
@@ -197,9 +158,10 @@ async function addAbout(event) {
 
   if (!item) return;
 
-  await store.addItem("abouts", {
+  await createItem("abouts", {
     text: item.aboutInput
   });
+
   form.reset();
 }
 
@@ -211,62 +173,90 @@ async function addSay(event) {
 
   if (!item) return;
 
-  await store.addItem("says", {
+  await createItem("says", {
     text: item.sayText,
     name: item.sayName
   });
+
   form.reset();
 }
 
 async function saveContact(event) {
   event.preventDefault();
 
-  const form = event.currentTarget;
-  const phone = document.getElementById("phoneContact").value.trim();
-  const facebook = document.getElementById("facebookContact").value.trim();
-  const instagram = document.getElementById("instagramContact").value.trim();
+  const contact = {
+    phone: document.getElementById("phoneContact").value.trim(),
+    facebook: document.getElementById("facebookContact").value.trim(),
+    instagram: document.getElementById("instagramContact").value.trim()
+  };
 
-  await store.saveContact({ phone, facebook, instagram });
-  form.reset();
+  await apiFetch("/api/contact", {
+    method: "PUT",
+    body: JSON.stringify(contact)
+  });
+
+  event.currentTarget.reset();
+  await loadData();
 }
 
-function saveMembershipForm(event) {
+async function saveMembershipForm(event) {
   event.preventDefault();
 
   const form = event.currentTarget;
   const message = document.getElementById("membershipMessage");
   const data = new FormData(form);
-  const application = {};
 
-  data.forEach((value, key) => {
-    if (value instanceof File) {
-      application[key] = value.name || "";
-      return;
-    }
+  try {
+    await apiFetch("/api/membership", {
+      method: "POST",
+      body: data
+    });
 
-    if (application[key]) {
-      application[key] = Array.isArray(application[key])
-        ? [...application[key], value]
-        : [application[key], value];
-      return;
-    }
+    message.textContent = "Анкет амжилттай хадгалагдлаа.";
+    form.reset();
+    await loadData();
+  } catch (error) {
+    message.textContent = error.message;
+  }
+}
 
-    application[key] = value;
+async function createItem(listName, item) {
+  await apiFetch(`/api/${listName}`, {
+    method: "POST",
+    body: JSON.stringify(item)
   });
 
-  application.createdAt = new Date().toISOString();
+  await loadData();
+}
 
-  const storageKey = "lady-riders-membership-applications";
-  const saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
-  saved.unshift(application);
-  localStorage.setItem(storageKey, JSON.stringify(saved));
+async function updateItem(listName, id, item) {
+  await apiFetch(`/api/${listName}/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(item)
+  });
 
-  message.textContent = "Анкет амжилттай хадгалагдлаа. Бид удахгүй холбогдох болно.";
-  form.reset();
+  await loadData();
+}
+
+async function deleteItem(listName, id) {
+  const ok = confirm("Устгах уу?");
+
+  if (!ok) return;
+
+  await apiFetch(`/api/${listName}/${id}`, {
+    method: "DELETE"
+  });
+
+  await loadData();
 }
 
 async function updateStat(key, amount) {
-  await store.updateStat(key, amount);
+  await apiFetch(`/api/stats/${key}`, {
+    method: "PATCH",
+    body: JSON.stringify({ amount })
+  });
+
+  await loadData();
 }
 
 function readForm(form, fieldIds) {
@@ -303,7 +293,7 @@ function renderContact(contact = {}) {
 function renderContactLink(container, value, label) {
   container.replaceChildren();
 
-  if (!value) {
+  if (!value || value === "-") {
     container.textContent = "-";
     return;
   }
@@ -349,6 +339,14 @@ function renderFeatureCard(item) {
   text.textContent = item.text || "";
 
   card.append(title, text);
+
+  if (isAdmin) {
+    card.append(createCardActions(
+      () => editFeature(item),
+      () => deleteItem("features", item.id)
+    ));
+  }
+
   return card;
 }
 
@@ -357,7 +355,16 @@ function renderAboutCard(item) {
   const text = document.createElement("p");
 
   text.textContent = item.text || "";
+
   card.append(text);
+
+  if (isAdmin) {
+    card.append(createCardActions(
+      () => editAbout(item),
+      () => deleteItem("abouts", item.id)
+    ));
+  }
+
   return card;
 }
 
@@ -370,7 +377,55 @@ function renderSayCard(item) {
   name.textContent = item.name ? `- ${item.name}` : "";
 
   card.append(text, name);
+
+  if (isAdmin) {
+    card.append(createCardActions(
+      () => editSay(item),
+      () => deleteItem("says", item.id)
+    ));
+  }
+
   return card;
+}
+
+async function editFeature(item) {
+  const title = prompt("Шинэ гарчиг", item.title || "");
+
+  if (title === null) return;
+
+  const text = prompt("Шинэ тайлбар", item.text || "");
+
+  if (text === null) return;
+
+  await updateItem("features", item.id, {
+    title: title.trim(),
+    text: text.trim()
+  });
+}
+
+async function editAbout(item) {
+  const text = prompt("Шинэ текст", item.text || "");
+
+  if (text === null) return;
+
+  await updateItem("abouts", item.id, {
+    text: text.trim()
+  });
+}
+
+async function editSay(item) {
+  const text = prompt("Шинэ сэтгэгдэл", item.text || "");
+
+  if (text === null) return;
+
+  const name = prompt("Нэр", item.name || "");
+
+  if (name === null) return;
+
+  await updateItem("says", item.id, {
+    text: text.trim(),
+    name: name.trim()
+  });
 }
 
 function createCard() {
@@ -379,168 +434,92 @@ function createCard() {
   return card;
 }
 
-function createLocalStore() {
-  const storageKey = "lady-riders-mongolia";
-  let state = readState();
-  const subscribers = {
-    stats: [],
-    features: [],
-    abouts: [],
-    says: [],
-    contact: []
-  };
+function createCardActions(onEdit, onDelete) {
+  const actions = document.createElement("div");
+  const editButton = document.createElement("button");
+  const deleteButton = document.createElement("button");
 
-  queueMicrotask(notifyAll);
+  actions.className = "card-actions";
+  editButton.type = "button";
+  editButton.textContent = "Засах";
+  editButton.addEventListener("click", onEdit);
 
-  return {
-    subscribeStats(callback) {
-      subscribers.stats.push(callback);
-      callback(state.stats);
-    },
-    subscribeList(name, callback) {
-      subscribers[name].push(callback);
-      callback(state[name]);
-    },
-    subscribeContact(callback) {
-      subscribers.contact.push(callback);
-      callback(state.contact);
-    },
-    async addMember(member) {
-      state.members = [...(state.members || []), addMeta(member)];
-      save();
-    },
-    async addItem(name, item) {
-      state[name] = [addMeta(item), ...state[name]];
-      save();
-      notify(name, state[name]);
-    },
-    async updateStat(key, amount) {
-      const current = Number(state.stats[key] || 0);
-      const minimum = key === "community" ? 1 : 0;
-      state.stats[key] = Math.max(minimum, current + amount);
-      save();
-      notify("stats", state.stats);
-    },
-    async saveContact(contact) {
-      state.contact = contact;
-      save();
-      notify("contact", state.contact);
-    }
-  };
+  deleteButton.type = "button";
+  deleteButton.className = "danger-button";
+  deleteButton.textContent = "Устгах";
+  deleteButton.addEventListener("click", onDelete);
 
-  function readState() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(storageKey));
-      return saved ? mergeState(defaultState, saved) : cloneDefaultState();
-    } catch {
-      return cloneDefaultState();
-    }
+  actions.append(editButton, deleteButton);
+  return actions;
+}
+
+async function apiFetch(url, options = {}) {
+  const isFormData = options.body instanceof FormData;
+  const headers = isFormData
+    ? options.headers || {}
+    : {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    };
+
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(errorBody.error || "API алдаа гарлаа.");
   }
 
-  function save() {
-    localStorage.setItem(storageKey, JSON.stringify(state));
+  return response.json();
+}
+
+async function checkAuth() {
+  try {
+    const auth = await apiFetch("/api/auth/me");
+    isAdmin = auth.loggedIn;
+  } catch {
+    isAdmin = false;
   }
 
-  function notify(name, value) {
-    subscribers[name].forEach((callback) => callback(value));
+  updateAdminUi();
+}
+
+async function logoutAdmin() {
+  await apiFetch("/api/auth/logout", {
+    method: "POST",
+    body: JSON.stringify({})
+  });
+
+  isAdmin = false;
+  updateAdminUi();
+  await loadData();
+}
+
+function updateAdminUi() {
+  document.querySelectorAll("[data-admin-only]").forEach((element) => {
+    element.hidden = !isAdmin;
+  });
+
+  if (selectors.authLink) {
+    selectors.authLink.hidden = isAdmin;
   }
 
-  function notifyAll() {
-    notify("stats", state.stats);
-    notify("features", state.features);
-    notify("abouts", state.abouts);
-    notify("says", state.says);
-    notify("contact", state.contact);
+  if (selectors.logoutBtn) {
+    selectors.logoutBtn.hidden = !isAdmin;
   }
 }
 
-async function createFirebaseStore() {
-  const [{ initializeApp }, firestore] = await Promise.all([
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
-  ]);
+function showLoadError(error) {
+  const containers = [selectors.featureList, selectors.aboutList, selectors.sayList];
 
-  const {
-    getFirestore,
-    collection,
-    addDoc,
-    onSnapshot,
-    doc,
-    setDoc,
-    getDoc,
-    updateDoc,
-    increment,
-    serverTimestamp,
-    query,
-    orderBy
-  } = firestore;
+  containers.forEach((container) => {
+    container.replaceChildren();
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const statsRef = doc(db, "stats", "main");
-  const contactRef = doc(db, "settings", "contact");
-
-  await ensureStats();
-
-  return {
-    subscribeStats(callback) {
-      onSnapshot(statsRef, (snapshot) => callback(snapshot.data() || defaultState.stats));
-    },
-    subscribeList(name, callback) {
-      const listQuery = query(collection(db, name), orderBy("createdAt", "desc"));
-      onSnapshot(listQuery, (snapshot) => {
-        callback(snapshot.docs.map((item) => item.data()));
-      });
-    },
-    subscribeContact(callback) {
-      onSnapshot(contactRef, (snapshot) => callback(snapshot.data() || defaultState.contact));
-    },
-    async addMember(member) {
-      await addDoc(collection(db, "members"), addMeta(member, serverTimestamp));
-    },
-    async addItem(name, item) {
-      await addDoc(collection(db, name), addMeta(item, serverTimestamp));
-    },
-    async updateStat(key, amount) {
-      await updateDoc(statsRef, {
-        [key]: increment(amount)
-      });
-    },
-    async saveContact(contact) {
-      await setDoc(contactRef, contact);
-    }
-  };
-
-  async function ensureStats() {
-    const snapshot = await getDoc(statsRef);
-    if (!snapshot.exists()) {
-      await setDoc(statsRef, defaultState.stats);
-    }
-  }
-}
-
-function addMeta(item, timestampFactory) {
-  return {
-    ...item,
-    createdAt: timestampFactory ? timestampFactory() : new Date().toISOString()
-  };
-}
-
-function mergeState(base, saved) {
-  return {
-    ...cloneDefaultState(),
-    ...saved,
-    stats: {
-      ...base.stats,
-      ...(saved.stats || {})
-    },
-    contact: {
-      ...base.contact,
-      ...(saved.contact || {})
-    }
-  };
-}
-
-function cloneDefaultState() {
-  return JSON.parse(JSON.stringify(defaultState));
+    const message = document.createElement("p");
+    message.className = "card";
+    message.textContent = `Server ажиллаж байгаа эсэхийг шалгана уу. ${error.message}`;
+    container.append(message);
+  });
 }

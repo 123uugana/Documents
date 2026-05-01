@@ -23,6 +23,8 @@
       <a href="#gallery">Зураг</a>
       <a href="#contact">Холбоо барих</a>
       <a href="#membership">Анкет</a>
+      <a id="authLink" href="./admin.html">Admin login</a>
+      <button id="logoutBtn" class="nav-button" type="button" hidden>Logout</button>
     </nav>
 
     <button id="menuBtn" class="icon-button" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
@@ -47,7 +49,7 @@
         <h2 id="featuresTitle">Онцлог</h2>
       </div>
 
-      <form id="featureForm" class="add-box" autocomplete="off">
+      <form id="featureForm" class="add-box" autocomplete="off" data-admin-only hidden>
         <input id="featureTitle" name="featureTitle" placeholder="Гарчиг" aria-label="Feature title">
         <input id="featureText" name="featureText" placeholder="Тайлбар" aria-label="Feature text">
         <button type="submit">Нэмэх</button>
@@ -62,7 +64,7 @@
         <h2 id="aboutTitle">Бидний тухай</h2>
       </div>
 
-      <form id="aboutForm" class="add-box" autocomplete="off">
+      <form id="aboutForm" class="add-box" autocomplete="off" data-admin-only hidden>
         <input id="aboutInput" name="aboutInput" placeholder="Текст нэмэх" aria-label="About text">
         <button type="submit">Нэмэх</button>
       </form>
@@ -102,7 +104,7 @@
         </article>
       </div>
 
-      <div class="add-box compact-actions" aria-label="Stats actions">
+      <div class="add-box compact-actions" aria-label="Stats actions" data-admin-only hidden>
         <button type="button" id="addEventBtn">+ Эвент</button>
         <button type="button" id="addTripBtn">+ Аялал</button>
         <button type="button" id="addCommunityBtn">+ Нэгдэл</button>
@@ -116,7 +118,7 @@
         <h2 id="sayTitle">Гишүүдийн сэтгэгдэл</h2>
       </div>
 
-      <form id="sayForm" class="add-box" autocomplete="off">
+      <form id="sayForm" class="add-box" autocomplete="off" data-admin-only hidden>
         <input id="sayText" name="sayText" placeholder="Сэтгэгдэл" aria-label="Comment">
         <input id="sayName" name="sayName" placeholder="Нэр" aria-label="Name">
         <button type="submit">Нэмэх</button>
@@ -160,7 +162,7 @@
         <h2 id="contactTitle">Холбоо барих</h2>
       </div>
 
-      <form id="contactForm" class="add-box" autocomplete="off">
+      <form id="contactForm" class="add-box" autocomplete="off" data-admin-only hidden>
         <input id="phoneContact" name="phoneContact" placeholder="Утас" aria-label="Phone">
         <input id="facebookContact" name="facebookContact" placeholder="Facebook" aria-label="Facebook">
         <input id="instagramContact" name="instagramContact" placeholder="https://www.instagram.com/lady_riders_mongolia_wmc/" aria-label="Instagram">
