@@ -13,6 +13,8 @@ services:
         sync: false
       - key: ADMIN_PASSWORD_HASH
         sync: false
+      - key: FRONTEND_ORIGINS
+        value: https://123uugana.github.io
       - key: DATA_FILE_PATH
         value: /var/data/data.json
       - key: UPLOADS_DIR

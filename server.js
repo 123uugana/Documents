@@ -1,12 +1,13 @@
 import "dotenv/config";
 
 import bcrypt from "bcrypt";
+import cors from "cors";
 import express from "express";
 import session from "express-session";
 import multer from "multer";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, extname, join, resolve } from "node:path";
+import { dirname, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const app = express();
@@ -17,6 +18,16 @@ const uploadsDir = resolvePath(process.env.UPLOADS_DIR || "./uploads");
 const sessionSecret = process.env.SESSION_SECRET || "local-dev-session-secret";
 const adminUsername = process.env.ADMIN_USERNAME || "";
 const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH || "";
+const frontendOrigins = (process.env.FRONTEND_ORIGINS || [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "http://localhost:5500",
+  "http://127.0.0.1:5500",
+  "https://123uugana.github.io"
+].join(","))
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const listNames = ["features", "abouts", "says", "members", "membershipApplications"];
 const adminListNames = ["features", "abouts", "says", "members", "membershipApplications"];
@@ -107,6 +118,17 @@ if (process.env.NODE_ENV === "production") {
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cors({
+  credentials: true,
+  origin(origin, callback) {
+    if (!origin || frontendOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`CORS blocked origin: ${origin}`));
+  }
+}));
 app.use(session({
   name: "lady_riders_admin",
   secret: sessionSecret,
@@ -114,7 +136,7 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     secure: process.env.NODE_ENV === "production",
     maxAge: 1000 * 60 * 60 * 4
   }
@@ -151,7 +173,11 @@ app.post("/api/auth/login", async (request, response) => {
 
 app.post("/api/auth/logout", (request, response) => {
   request.session.destroy(() => {
-    response.clearCookie("lady_riders_admin");
+    response.clearCookie("lady_riders_admin", {
+      httpOnly: true,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production"
+    });
     response.json({ ok: true });
   });
 });
