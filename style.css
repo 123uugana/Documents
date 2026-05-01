@@ -44,6 +44,14 @@ body.menu-open {
   display: none !important;
 }
 
+[data-admin-only] {
+  display: none !important;
+}
+
+body.is-admin [data-admin-only]:not([hidden]) {
+  display: flex !important;
+}
+
 ::selection {
   background: rgba(13, 184, 255, 0.34);
   color: var(--text);

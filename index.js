@@ -25,6 +25,7 @@ let isAdmin = false;
 init();
 
 async function init() {
+  updateAdminUi();
   bindUi();
   await checkAuth();
   await loadData();
@@ -442,6 +443,7 @@ function createCardActions(onEdit, onDelete) {
   const deleteButton = document.createElement("button");
 
   actions.className = "card-actions";
+  actions.dataset.adminOnly = "";
   editButton.type = "button";
   editButton.textContent = "Засах";
   editButton.addEventListener("click", onEdit);
@@ -478,6 +480,8 @@ async function logoutAdmin() {
 }
 
 function updateAdminUi() {
+  document.body.classList.toggle("is-admin", isAdmin);
+
   document.querySelectorAll("[data-admin-only]").forEach((element) => {
     element.hidden = !isAdmin;
   });
