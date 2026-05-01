@@ -25,6 +25,8 @@ let isAdmin = false;
 init();
 
 async function init() {
+  isAdmin = false;
+  document.body.classList.remove("is-admin");
   updateAdminUi();
   bindUi();
   await checkAuth();
@@ -480,18 +482,20 @@ async function logoutAdmin() {
 }
 
 function updateAdminUi() {
-  document.body.classList.toggle("is-admin", isAdmin);
+  const adminIsActive = Boolean(isAdmin);
+
+  document.body.classList.toggle("is-admin", adminIsActive);
 
   document.querySelectorAll("[data-admin-only]").forEach((element) => {
-    element.hidden = !isAdmin;
+    element.hidden = !adminIsActive;
   });
 
   if (selectors.authLink) {
-    selectors.authLink.hidden = isAdmin;
+    selectors.authLink.hidden = adminIsActive;
   }
 
   if (selectors.logoutBtn) {
-    selectors.logoutBtn.hidden = !isAdmin;
+    selectors.logoutBtn.hidden = !adminIsActive;
   }
 }
 

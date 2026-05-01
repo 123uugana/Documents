@@ -40,15 +40,17 @@ body.menu-open {
   overflow: hidden;
 }
 
-[hidden] {
-  display: none !important;
-}
-
+[hidden],
 [data-admin-only] {
   display: none !important;
 }
 
-body.is-admin [data-admin-only]:not([hidden]) {
+body.is-admin form[data-admin-only]:not([hidden]),
+body.is-admin div[data-admin-only]:not([hidden]) {
+  display: flex !important;
+}
+
+body.is-admin .card-actions[data-admin-only]:not([hidden]) {
   display: flex !important;
 }
 
