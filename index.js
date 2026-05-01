@@ -1,3 +1,5 @@
+import { apiFetch } from "./api.js";
+
 const selectors = {
   modal: document.getElementById("modal"),
   navMenu: document.getElementById("navMenu"),
@@ -16,8 +18,6 @@ const selectors = {
   authLink: document.getElementById("authLink"),
   logoutBtn: document.getElementById("logoutBtn")
 };
-
-const API_BASE_URL = getApiBaseUrl();
 
 let state = null;
 let isAdmin = false;
@@ -453,46 +453,6 @@ function createCardActions(onEdit, onDelete) {
 
   actions.append(editButton, deleteButton);
   return actions;
-}
-
-async function apiFetch(url, options = {}) {
-  const isFormData = options.body instanceof FormData;
-  const headers = isFormData
-    ? options.headers || {}
-    : {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    };
-
-  const requestUrl = `${API_BASE_URL}${url}`;
-
-  const response = await fetch(requestUrl, {
-    ...options,
-    credentials: "include",
-    headers
-  }).catch((error) => {
-    console.error(`API request failed: ${requestUrl}`, error);
-    throw new Error("API server-тэй холбогдож чадсангүй.");
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({}));
-    console.error(`API error ${response.status}: ${requestUrl}`, errorBody);
-    throw new Error(errorBody.error || "API алдаа гарлаа.");
-  }
-
-  return response.json();
-}
-
-function getApiBaseUrl() {
-  const localHosts = ["localhost", "127.0.0.1", ""];
-  const isLocal = localHosts.includes(window.location.hostname);
-
-  if (isLocal) {
-    return "http://localhost:3000";
-  }
-
-  return "https://lady-riders-mongolia.onrender.com";
 }
 
 async function checkAuth() {

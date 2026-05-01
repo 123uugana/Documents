@@ -4,6 +4,9 @@
   "description": "Lady Riders Mongolia website with a small Node.js server.",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node server.js"
   },
