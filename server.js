@@ -18,16 +18,24 @@ const uploadsDir = resolvePath(process.env.UPLOADS_DIR || "./uploads");
 const sessionSecret = process.env.SESSION_SECRET || "local-dev-session-secret";
 const adminUsername = process.env.ADMIN_USERNAME || "";
 const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH || "";
-const frontendOrigins = (process.env.FRONTEND_ORIGINS || [
+const frontendOrigins = normalizeOrigins(process.env.FRONTEND_ORIGINS || [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "http://localhost:5500",
   "http://127.0.0.1:5500",
   "https://123uugana.github.io"
-].join(","))
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+].join(","));
+const corsOptions = {
+  credentials: true,
+  origin(origin, callback) {
+    if (!origin || frontendOrigins.includes(normalizeOrigin(origin))) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`CORS blocked origin: ${origin}`));
+  }
+};
 
 const listNames = ["features", "abouts", "says", "members", "membershipApplications"];
 const adminListNames = ["features", "abouts", "says", "members", "membershipApplications"];
@@ -116,19 +124,10 @@ if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
 
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({
-  credentials: true,
-  origin(origin, callback) {
-    if (!origin || frontendOrigins.includes(origin)) {
-      callback(null, true);
-      return;
-    }
-
-    callback(new Error(`CORS blocked origin: ${origin}`));
-  }
-}));
 app.use(session({
   name: "lady_riders_admin",
   secret: sessionSecret,
@@ -475,6 +474,27 @@ function blockPrivateFiles(request, response, next) {
 
 function resolvePath(pathValue) {
   return resolve(rootDir, pathValue);
+}
+
+function normalizeOrigins(value) {
+  return value
+    .split(",")
+    .map((origin) => normalizeOrigin(origin))
+    .filter(Boolean);
+}
+
+function normalizeOrigin(value) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return "";
+  }
+
+  try {
+    return new URL(trimmedValue).origin;
+  } catch {
+    return trimmedValue.replace(/\/$/, "");
+  }
 }
 
 function clone(value) {

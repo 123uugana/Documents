@@ -3,12 +3,13 @@ export const API_BASE_URL = getApiBaseUrl();
 export async function apiFetch(path, options = {}) {
   const requestUrl = `${API_BASE_URL}${path}`;
   const isFormData = options.body instanceof FormData;
-  const headers = isFormData
-    ? options.headers || {}
-    : {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    };
+  const headers = {
+    ...(options.headers || {})
+  };
+
+  if (options.body && !isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
 
   try {
     const response = await fetch(requestUrl, {
