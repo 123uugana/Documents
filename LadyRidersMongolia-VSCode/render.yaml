@@ -15,11 +15,7 @@ services:
         sync: false
       - key: FRONTEND_ORIGINS
         value: https://lady-riders-mongolia.onrender.com,https://123uugana.github.io
-      - key: DATA_FILE_PATH
-        value: /var/data/data.json
-      - key: UPLOADS_DIR
-        value: /var/data/uploads
-    disk:
-      name: lady-riders-data
-      mountPath: /var/data
-      sizeGB: 1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false

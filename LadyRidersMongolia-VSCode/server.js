@@ -7,6 +7,7 @@ import session from "express-session";
 import multer from "multer";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,8 +18,9 @@ const __dirname = dirname(__filename);
 const rootDir = __dirname;
 const distDir = join(__dirname, "dist");
 const distIndexFile = join(distDir, "index.html");
-const dataFile = resolvePath(process.env.DATA_FILE_PATH || "./data.json");
-const uploadsDir = resolvePath(process.env.UPLOADS_DIR || "./uploads");
+let dataFile = resolvePath(process.env.DATA_FILE_PATH || "./data.json");
+let uploadsDir = resolvePath(process.env.UPLOADS_DIR || "./uploads");
+const fallbackStorageDir = resolve(tmpdir(), "lady-riders-data");
 const isProduction = process.env.NODE_ENV === "production";
 const sessionSecret = process.env.SESSION_SECRET || "local-dev-session-secret";
 const adminUsername = process.env.ADMIN_USERNAME || "";
@@ -576,9 +578,38 @@ async function saveData(data) {
 }
 
 async function initializeStorage() {
+  try {
+    await ensureStorageFolders();
+  } catch (error) {
+    if (!isPermissionError(error)) {
+      throw error;
+    }
+
+    const originalDataFile = dataFile;
+    const originalUploadsDir = uploadsDir;
+
+    dataFile = resolve(fallbackStorageDir, "data.json");
+    uploadsDir = resolve(fallbackStorageDir, "uploads");
+
+    console.warn(
+      `Storage path is not writable (${originalDataFile}, ${originalUploadsDir}). ` +
+      `Using temporary fallback storage at ${fallbackStorageDir}. ` +
+      "For persistent Render storage, attach a disk mounted at /var/data."
+    );
+
+    await ensureStorageFolders();
+  }
+
+  await readData();
+}
+
+async function ensureStorageFolders() {
   await mkdir(dirname(dataFile), { recursive: true });
   await mkdir(uploadsDir, { recursive: true });
-  await readData();
+}
+
+function isPermissionError(error) {
+  return ["EACCES", "EPERM", "EROFS"].includes(error?.code);
 }
 
 function asyncRoute(handler) {

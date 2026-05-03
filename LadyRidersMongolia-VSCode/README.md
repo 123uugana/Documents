@@ -89,11 +89,14 @@ npm start
 Production storage env vars:
 
 ```text
-DATA_FILE_PATH=/var/data/data.json
-UPLOADS_DIR=/var/data/uploads
+SUPABASE_URL=your-project-url
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-The server creates these folders automatically when it starts.
+Run `supabase-schema.sql` in the Supabase SQL editor before deploying. Render free
+services do not have persistent disks, so production data is stored in Supabase
+PostgreSQL. Local development can still fall back to `data.json` when Supabase
+env vars are not set.
 
 The frontend uses `api.js` to choose the API URL:
 

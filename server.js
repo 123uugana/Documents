@@ -5,6 +5,7 @@ import cors from "cors";
 import express from "express";
 import session from "express-session";
 import multer from "multer";
+import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, extname, join, resolve } from "node:path";
@@ -18,7 +19,15 @@ const rootDir = __dirname;
 const distDir = join(__dirname, "dist");
 const distIndexFile = join(distDir, "index.html");
 const dataFile = resolvePath(process.env.DATA_FILE_PATH || "./data.json");
-const uploadsDir = resolvePath(process.env.UPLOADS_DIR || "./uploads");
+const supabaseUrl = process.env.SUPABASE_URL || "";
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const supabase = supabaseUrl && supabaseServiceRoleKey
+  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      persistSession: false
+    }
+  })
+  : null;
 const isProduction = process.env.NODE_ENV === "production";
 const sessionSecret = process.env.SESSION_SECRET || "local-dev-session-secret";
 const adminUsername = process.env.ADMIN_USERNAME || "";
@@ -106,17 +115,7 @@ const defaultData = {
 };
 
 const upload = multer({
-  storage: multer.diskStorage({
-    destination(request, file, callback) {
-      mkdir(uploadsDir, { recursive: true })
-        .then(() => callback(null, uploadsDir))
-        .catch((error) => callback(error));
-    },
-    filename(request, file, callback) {
-      const extension = extname(file.originalname).toLowerCase();
-      callback(null, `${Date.now()}-${randomUUID()}${extension}`);
-    }
-  }),
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024
   },
@@ -504,13 +503,6 @@ app.use("/api", (request, response) => {
   response.status(404).json({ error: "API route not found" });
 });
 
-app.use("/uploads", express.static(uploadsDir, {
-  etag: false,
-  setHeaders(response) {
-    response.setHeader("Cache-Control", "public, max-age=86400");
-  }
-}));
-
 app.use(blockPrivateFiles);
 app.use(express.static(distDir, {
   etag: false,
@@ -559,6 +551,14 @@ app.listen(port, () => {
 });
 
 async function readData() {
+  if (supabase) {
+    return readDataFromSupabase();
+  }
+
+  if (isProduction) {
+    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required in production.");
+  }
+
   try {
     const fileContent = await readFile(dataFile, "utf8");
     const savedData = JSON.parse(fileContent);
@@ -571,13 +571,134 @@ async function readData() {
 }
 
 async function saveData(data) {
+  if (supabase) {
+    await saveDataToSupabase(data);
+    return;
+  }
+
+  if (isProduction) {
+    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required in production.");
+  }
+
   await mkdir(dirname(dataFile), { recursive: true });
   await writeFile(dataFile, JSON.stringify(data, null, 2), "utf8");
 }
 
+async function readDataFromSupabase() {
+  const [
+    features,
+    abouts,
+    says,
+    members,
+    users,
+    membershipApplications,
+    stats,
+    contact
+  ] = await Promise.all([
+    selectRows("features"),
+    selectRows("abouts"),
+    selectRows("says"),
+    selectRows("members"),
+    selectRows("users"),
+    selectRows("membership_applications"),
+    selectSingleRow("stats", 1),
+    selectSingleRow("contact", 1)
+  ]);
+
+  return mergeWithDefaultData({
+    features: features.map(rowToFeature),
+    abouts: abouts.map(rowToAbout),
+    says: says.map(rowToSay),
+    members: members.map(rowToMember),
+    users: users.map(rowToUser),
+    membershipApplications: membershipApplications.map(rowToApplication),
+    stats: stats ? rowToStats(stats) : defaultData.stats,
+    contact: contact ? rowToContact(contact) : defaultData.contact
+  });
+}
+
+async function saveDataToSupabase(data) {
+  await syncRows("users", data.users.map(userToRow));
+  await syncRows("features", data.features.map(featureToRow));
+  await syncRows("abouts", data.abouts.map(aboutToRow));
+  await syncRows("says", data.says.map(sayToRow));
+  await syncRows("members", data.members.map(memberToRow));
+  await syncRows(
+    "membership_applications",
+    data.membershipApplications.map(applicationToRow)
+  );
+
+  await upsertRows("stats", [statsToRow(data.stats)]);
+  await upsertRows("contact", [contactToRow(data.contact)]);
+}
+
+async function selectRows(tableName) {
+  const { data, error } = await supabase
+    .from(tableName)
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  throwIfSupabaseError(error);
+  return data || [];
+}
+
+async function selectSingleRow(tableName, id) {
+  const { data, error } = await supabase
+    .from(tableName)
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  throwIfSupabaseError(error);
+  return data || null;
+}
+
+async function syncRows(tableName, rows) {
+  const { data: existingRows, error } = await supabase
+    .from(tableName)
+    .select("id");
+
+  throwIfSupabaseError(error);
+
+  const nextIds = new Set(rows.map((row) => row.id));
+  const deletedIds = (existingRows || [])
+    .map((row) => row.id)
+    .filter((id) => !nextIds.has(id));
+
+  if (deletedIds.length) {
+    const { error: deleteError } = await supabase
+      .from(tableName)
+      .delete()
+      .in("id", deletedIds);
+
+    throwIfSupabaseError(deleteError);
+  }
+
+  await upsertRows(tableName, rows);
+}
+
+async function upsertRows(tableName, rows) {
+  if (!rows.length) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from(tableName)
+    .upsert(rows, { onConflict: "id" });
+
+  throwIfSupabaseError(error);
+}
+
+function throwIfSupabaseError(error) {
+  if (error) {
+    throw new Error(`Supabase error: ${error.message}`);
+  }
+}
+
 async function initializeStorage() {
-  await mkdir(dirname(dataFile), { recursive: true });
-  await mkdir(uploadsDir, { recursive: true });
+  if (!supabase && !isProduction) {
+    await mkdir(dirname(dataFile), { recursive: true });
+  }
   await readData();
 }
 
@@ -614,8 +735,192 @@ function isAdminListName(value) {
 }
 
 function getUploadedPath(files, fieldName) {
-  const file = files?.[fieldName]?.[0];
-  return file ? `/uploads/${file.filename}` : "";
+  return files?.[fieldName]?.[0] ? "" : "";
+}
+
+function rowToFeature(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    text: row.text,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function featureToRow(item) {
+  return {
+    id: item.id,
+    title: item.title || "",
+    text: item.text || "",
+    created_at: item.createdAt,
+    updated_at: item.updatedAt || null
+  };
+}
+
+function rowToAbout(row) {
+  return {
+    id: row.id,
+    text: row.text,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function aboutToRow(item) {
+  return {
+    id: item.id,
+    text: item.text || "",
+    created_at: item.createdAt,
+    updated_at: item.updatedAt || null
+  };
+}
+
+function rowToSay(row) {
+  return {
+    id: row.id,
+    text: row.text,
+    name: row.name,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function sayToRow(item) {
+  return {
+    id: item.id,
+    text: item.text || "",
+    name: item.name || "",
+    created_at: item.createdAt,
+    updated_at: item.updatedAt || null
+  };
+}
+
+function rowToMember(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    phone: row.phone,
+    bike: row.bike,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function memberToRow(item) {
+  return {
+    id: item.id,
+    name: item.name || "",
+    phone: item.phone || "",
+    bike: item.bike || "",
+    created_at: item.createdAt,
+    updated_at: item.updatedAt || null
+  };
+}
+
+function rowToUser(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    passwordHash: row.password_hash,
+    role: row.role,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function userToRow(user) {
+  return {
+    id: user.id,
+    name: user.name || "",
+    email: normalizeEmail(user.email || ""),
+    password_hash: user.passwordHash || "",
+    role: user.role || "user",
+    status: user.status || "pending",
+    created_at: user.createdAt,
+    updated_at: user.updatedAt || null
+  };
+}
+
+function rowToApplication(row) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    status: row.status,
+    ...(row.application_data || {}),
+    profilePhotoPath: row.profile_photo_path || "",
+    motorcyclePhotoPath: row.motorcycle_photo_path || "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    reviewedAt: row.reviewed_at,
+    reviewedBy: row.reviewed_by
+  };
+}
+
+function applicationToRow(application) {
+  const {
+    id,
+    userId,
+    status,
+    profilePhotoPath,
+    motorcyclePhotoPath,
+    createdAt,
+    updatedAt,
+    reviewedAt,
+    reviewedBy,
+    ...applicationData
+  } = application;
+
+  return {
+    id,
+    user_id: userId,
+    status: status || "pending",
+    application_data: applicationData,
+    profile_photo_path: profilePhotoPath || "",
+    motorcycle_photo_path: motorcyclePhotoPath || "",
+    created_at: createdAt,
+    updated_at: updatedAt || null,
+    reviewed_at: reviewedAt || null,
+    reviewed_by: reviewedBy || null
+  };
+}
+
+function rowToStats(row) {
+  return {
+    members: row.members,
+    events: row.events,
+    trips: row.trips,
+    community: row.community
+  };
+}
+
+function statsToRow(stats = {}) {
+  return {
+    id: 1,
+    members: Number(stats.members || 0),
+    events: Number(stats.events || 0),
+    trips: Number(stats.trips || 0),
+    community: Math.max(1, Number(stats.community || 1))
+  };
+}
+
+function rowToContact(row) {
+  return {
+    phone: row.phone,
+    facebook: row.facebook,
+    instagram: row.instagram
+  };
+}
+
+function contactToRow(contact = {}) {
+  return {
+    id: 1,
+    phone: contact.phone || "-",
+    facebook: contact.facebook || "-",
+    instagram: contact.instagram || "-"
+  };
 }
 
 function removeReadonlyFields(item = {}) {
