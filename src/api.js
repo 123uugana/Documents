@@ -1,7 +1,7 @@
 export const API_BASE_URL = getApiBaseUrl();
 
 export async function apiFetch(path, options = {}) {
-  const requestUrl = `${API_BASE_URL}${path}`;
+  const url = `${API_BASE_URL}${path}`;
   const isFormData = options.body instanceof FormData;
   const headers = {
     ...(options.headers || {})
@@ -12,7 +12,7 @@ export async function apiFetch(path, options = {}) {
   }
 
   try {
-    const response = await fetch(requestUrl, {
+    const response = await fetch(url, {
       ...options,
       credentials: "include",
       headers

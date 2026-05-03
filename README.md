@@ -1,13 +1,99 @@
 # Lady Riders Mongolia
 
-Static HTML/CSS/JS frontend with a Node.js Express backend.
+React + Vite frontend with a Node.js Express backend.
+
+## React Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the backend API:
+
+```bash
+npm start
+```
+
+Start the React frontend in another terminal:
+
+```bash
+npm run dev
+```
+
+Local URLs:
+
+- React app: `http://127.0.0.1:5173`
+- Express API: `http://localhost:3000`
+
+## Migration Progress
+
+The React migration has started with these beginner-friendly pieces:
+
+- `src/main.jsx`: mounts React into `index.html`
+- `src/App.jsx`: loads API data with `useEffect`, stores it with `useState`, and wires CRUD functions
+- `src/api.js`: shared fetch helper with `API_BASE_URL`, JSON, credentials, and FormData support
+- `src/components/Header.jsx`: React header with mobile menu and admin/logout state
+- `src/components/Features.jsx`: features list, add, edit, delete
+- `src/components/About.jsx`: about list, add, edit, delete
+- `src/components/CardActions.jsx`: shared edit/delete buttons
+- `src/components/SectionHeading.jsx`: shared section title markup
+
+Phase 2 added:
+
+- `src/components/Stats.jsx`: renders stats and admin-only stat update buttons
+- `src/components/Gallery.jsx`: renders the existing image grid
+- `src/components/Contact.jsx`: renders contact data and admin-only save form
+
+The next migration step is to convert `MembershipForm`.
+
+Account-based membership added:
+
+- `POST /api/users/register`: creates a member account with bcrypt password hash
+- `POST /api/users/login`: logs a member in with session cookies
+- `POST /api/users/logout`: logs a member out
+- `GET /api/users/me`: returns the logged-in member without `passwordHash`
+- `POST /api/membership`: requires member login and stores the application with `userId`
+- `GET /api/admin/applications`: admin-only application list
+- `PATCH /api/admin/applications/:id/status`: admin-only approve/reject
+
+React components added:
+
+- `src/components/UserRegister.jsx`
+- `src/components/UserLogin.jsx`
+- `src/components/UserStatus.jsx`
+- `src/components/MembershipForm.jsx`
+- `src/components/AdminLogin.jsx`
+- `src/components/AdminApplications.jsx`
+
+The account, membership form, admin login, and approval dashboard are now React
+components using `useState`/`useEffect`. The React app does not use manual DOM
+queries or event listeners for this flow.
 
 ## Production Setup
 
-- Frontend: GitHub Pages
+- Frontend: React build served from Express `dist/`
 - Backend: Render Web Service
 - Data file: `data.json`
 - Uploads: `uploads/`
+
+Render build flow:
+
+```bash
+npm install
+npm run build
+npm start
+```
+
+Production storage env vars:
+
+```text
+DATA_FILE_PATH=/var/data/data.json
+UPLOADS_DIR=/var/data/uploads
+```
+
+The server creates these folders automatically when it starts.
 
 The frontend uses `api.js` to choose the API URL:
 

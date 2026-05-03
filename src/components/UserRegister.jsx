@@ -1,0 +1,70 @@
+import { useState } from "react";
+
+const initialForm = {
+  name: "",
+  email: "",
+  password: ""
+};
+
+export default function UserRegister({ onRegister }) {
+  const [formValues, setFormValues] = useState(initialForm);
+  const [message, setMessage] = useState("");
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setMessage("");
+
+    try {
+      await onRegister(formValues);
+      setFormValues(initialForm);
+      setMessage("Account үүслээ.");
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  function updateField(fieldName, value) {
+    setFormValues((currentValues) => ({
+      ...currentValues,
+      [fieldName]: value
+    }));
+  }
+
+  return (
+    <form className="form-section-card" autoComplete="on" onSubmit={handleSubmit}>
+      <h3>Member register</h3>
+      <label className="form-group">
+        <span>Нэр</span>
+        <input
+          value={formValues.name}
+          onChange={(event) => updateField("name", event.target.value)}
+          autoComplete="name"
+          required
+        />
+      </label>
+      <label className="form-group">
+        <span>Email</span>
+        <input
+          type="email"
+          value={formValues.email}
+          onChange={(event) => updateField("email", event.target.value)}
+          autoComplete="email"
+          required
+        />
+      </label>
+      <label className="form-group">
+        <span>Password</span>
+        <input
+          type="password"
+          value={formValues.password}
+          onChange={(event) => updateField("password", event.target.value)}
+          autoComplete="new-password"
+          minLength="6"
+          required
+        />
+      </label>
+      <button type="submit">Бүртгүүлэх</button>
+      <p className="membership-message" role="status">{message}</p>
+    </form>
+  );
+}
