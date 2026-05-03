@@ -73,10 +73,27 @@ queries or event listeners for this flow.
 
 ## Production Setup
 
-- Frontend: GitHub Pages
+- Frontend: React build served from Express `dist/`
 - Backend: Render Web Service
 - Data file: `data.json`
 - Uploads: `uploads/`
+
+Render build flow:
+
+```bash
+npm install
+npm run build
+npm start
+```
+
+Production storage env vars:
+
+```text
+DATA_FILE_PATH=/var/data/data.json
+UPLOADS_DIR=/var/data/uploads
+```
+
+The server creates these folders automatically when it starts.
 
 The frontend uses `api.js` to choose the API URL:
 
