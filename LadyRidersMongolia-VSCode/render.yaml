@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: lady-riders-mongolia
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        sync: false
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD_HASH
+        sync: false
+      - key: FRONTEND_ORIGINS
+        value: https://123uugana.github.io
+      - key: DATA_FILE_PATH
+        value: /var/data/data.json
+      - key: UPLOADS_DIR
+        value: /var/data/uploads
+    disk:
+      name: lady-riders-data
+      mountPath: /var/data
+      sizeGB: 1
