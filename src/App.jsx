@@ -13,6 +13,7 @@ import Stats from "./components/Stats.jsx";
 const emptyData = {
   features: [],
   abouts: [],
+  gallery: [],
   stats: {
     members: 0,
     events: 0,
@@ -67,6 +68,7 @@ export default function App() {
       setData({
         features: nextData.features || [],
         abouts: nextData.abouts || [],
+        gallery: nextData.gallery || [],
         stats: {
           ...emptyData.stats,
           ...(nextData.stats || {})
@@ -221,7 +223,13 @@ export default function App() {
 
         <Stats stats={data.stats} isAdmin={isAdmin} onUpdateStat={updateStat} />
 
-        <Gallery />
+        <Gallery
+          gallery={data.gallery}
+          isAdmin={isAdmin}
+          onAdd={(item) => createItem("gallery", item)}
+          onEdit={(id, item) => updateItem("gallery", id, item)}
+          onDelete={(id) => deleteItem("gallery", id)}
+        />
 
         <Contact contact={data.contact} isAdmin={isAdmin} onSave={saveContact} />
 

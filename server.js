@@ -64,8 +64,8 @@ const corsOptions = {
   }
 };
 
-const listNames = ["features", "abouts", "says", "members"];
-const adminListNames = ["features", "abouts", "says", "members", "membershipApplications"];
+const listNames = ["features", "abouts", "says", "members", "gallery"];
+const adminListNames = ["features", "abouts", "says", "members", "membershipApplications", "gallery"];
 const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
 const allowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp"];
 
@@ -112,6 +112,36 @@ const defaultData = {
     }
   ],
   members: [],
+  gallery: [
+    {
+      id: randomUUID(),
+      src: "/lut.png",
+      alt: "Motorcycle rider traveling on an open road",
+      caption: "Зам дээрх эрх чөлөө",
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: randomUUID(),
+      src: "/source.jpg",
+      alt: "Motorcycle parked during a Lady Riders group ride",
+      caption: "Хамтын аялал",
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: randomUUID(),
+      src: "/biker.jpg",
+      alt: "Close-up view of a motorcycle for rider lifestyle gallery",
+      caption: "Rider lifestyle",
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: randomUUID(),
+      src: "/lADY RIDERS.jpg",
+      alt: "Lady Riders Mongolia community group moment",
+      caption: "Lady Riders Mongolia",
+      createdAt: new Date().toISOString()
+    }
+  ],
   users: [],
   membershipApplications: [],
   contact: {
@@ -348,6 +378,14 @@ app.patch("/api/admin/applications/:id/status", requireAdmin, asyncRoute(async (
     user.status = status;
   }
 
+  if (status === "approved") {
+    addApprovedApplicationToMembers(data, application, user);
+  }
+
+  if (status === "rejected") {
+    removeRejectedApplicationFromMembers(data, application, user);
+  }
+
   await saveData(data);
   response.json({
     ...application,
@@ -414,6 +452,8 @@ app.post("/api/:listName", requireAdmin, asyncRoute(async (request, response) =>
     return;
   }
 
+  await ensureWritableListStorage(listName);
+
   const data = await readData();
   const item = {
     id: randomUUID(),
@@ -434,6 +474,8 @@ app.put("/api/:listName/:id", requireAdmin, asyncRoute(async (request, response)
     response.status(404).json({ error: "List not found" });
     return;
   }
+
+  await ensureWritableListStorage(listName);
 
   const data = await readData();
   const itemIndex = data[listName].findIndex((item) => item.id === id);
@@ -460,6 +502,8 @@ app.delete("/api/:listName/:id", requireAdmin, asyncRoute(async (request, respon
     response.status(404).json({ error: "List not found" });
     return;
   }
+
+  await ensureWritableListStorage(listName);
 
   const data = await readData();
   const itemIndex = data[listName].findIndex((item) => item.id === id);
@@ -593,6 +637,7 @@ async function readDataFromSupabase() {
     abouts,
     says,
     members,
+    gallery,
     users,
     membershipApplications,
     stats,
@@ -602,6 +647,7 @@ async function readDataFromSupabase() {
     selectRows("abouts"),
     selectRows("says"),
     selectRows("members"),
+    selectOptionalRows("gallery"),
     selectRows("users"),
     selectRows("membership_applications"),
     selectSingleRow("stats", 1),
@@ -613,6 +659,7 @@ async function readDataFromSupabase() {
     abouts: abouts.map(rowToAbout),
     says: says.map(rowToSay),
     members: members.map(rowToMember),
+    gallery: gallery ? gallery.map(rowToGalleryItem) : defaultData.gallery,
     users: users.map(rowToUser),
     membershipApplications: membershipApplications.map(rowToApplication),
     stats: stats ? rowToStats(stats) : defaultData.stats,
@@ -626,6 +673,7 @@ async function saveDataToSupabase(data) {
   await syncRows("abouts", data.abouts.map(aboutToRow));
   await syncRows("says", data.says.map(sayToRow));
   await syncRows("members", data.members.map(memberToRow));
+  await syncOptionalRows("gallery", data.gallery.map(galleryItemToRow));
   await syncRows(
     "membership_applications",
     data.membershipApplications.map(applicationToRow)
@@ -643,6 +691,19 @@ async function selectRows(tableName) {
 
   throwIfSupabaseError(error);
   return data || [];
+}
+
+async function selectOptionalRows(tableName) {
+  try {
+    return await selectRows(tableName);
+  } catch (error) {
+    if (isMissingRelationError(error)) {
+      console.warn(`Supabase table "${tableName}" is missing. Skipping it until the schema is updated.`);
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 async function selectSingleRow(tableName, id) {
@@ -680,6 +741,19 @@ async function syncRows(tableName, rows) {
   await upsertRows(tableName, rows);
 }
 
+async function syncOptionalRows(tableName, rows) {
+  try {
+    await syncRows(tableName, rows);
+  } catch (error) {
+    if (isMissingRelationError(error)) {
+      console.warn(`Supabase table "${tableName}" is missing. Changes for this table cannot be saved yet.`);
+      return;
+    }
+
+    throw error;
+  }
+}
+
 async function upsertRows(tableName, rows) {
   if (!rows.length) {
     return;
@@ -694,8 +768,14 @@ async function upsertRows(tableName, rows) {
 
 function throwIfSupabaseError(error) {
   if (error) {
-    throw new Error(`Supabase error: ${error.message}`);
+    const nextError = new Error(`Supabase error: ${error.message}`);
+    nextError.code = error.code;
+    throw nextError;
   }
+}
+
+function isMissingRelationError(error) {
+  return error?.code === "42P01" || /does not exist/i.test(error?.message || "");
 }
 
 async function initializeStorage() {
@@ -735,6 +815,18 @@ function isListName(value) {
 
 function isAdminListName(value) {
   return adminListNames.includes(value);
+}
+
+async function ensureWritableListStorage(listName) {
+  if (!supabase || listName !== "gallery") {
+    return;
+  }
+
+  const rows = await selectOptionalRows(listName);
+
+  if (rows === null) {
+    throw new Error("Gallery хадгалахын тулд Supabase дээр gallery table үүсгэнэ үү.");
+  }
 }
 
 function getUploadedPath(files, fieldName) {
@@ -816,6 +908,28 @@ function memberToRow(item) {
     name: item.name || "",
     phone: item.phone || "",
     bike: item.bike || "",
+    created_at: item.createdAt,
+    updated_at: item.updatedAt || null
+  };
+}
+
+function rowToGalleryItem(row) {
+  return {
+    id: row.id,
+    src: row.src,
+    alt: row.alt,
+    caption: row.caption,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function galleryItemToRow(item) {
+  return {
+    id: item.id,
+    src: item.src || "",
+    alt: item.alt || "",
+    caption: item.caption || "",
     created_at: item.createdAt,
     updated_at: item.updatedAt || null
   };
@@ -944,6 +1058,54 @@ function removeReadonlyFields(item = {}) {
   return editableFields;
 }
 
+function addApprovedApplicationToMembers(data, application, user) {
+  const member = memberFromApplication(application, user);
+  const alreadyAdded = data.members.some((currentMember) => isSameMember(currentMember, member));
+
+  if (alreadyAdded) {
+    data.stats.members = Math.max(Number(data.stats.members || 0), data.members.length);
+    return;
+  }
+
+  data.members.unshift(member);
+  data.stats.members = Number(data.stats.members || 0) + 1;
+}
+
+function removeRejectedApplicationFromMembers(data, application, user) {
+  const member = memberFromApplication(application, user);
+  const nextMembers = data.members.filter((currentMember) => !isSameMember(currentMember, member));
+  const removedCount = data.members.length - nextMembers.length;
+
+  if (!removedCount) {
+    return;
+  }
+
+  data.members = nextMembers;
+  data.stats.members = Math.max(0, Number(data.stats.members || 0) - removedCount);
+}
+
+function memberFromApplication(application, user) {
+  return {
+    id: randomUUID(),
+    name: application.firstName || user?.name || "Нэргүй",
+    phone: application.mobilePhone || "",
+    bike: application.motorcycleBrand || application.motorcycleModel || "-",
+    createdAt: new Date().toISOString()
+  };
+}
+
+function isSameMember(member, candidate) {
+  const phone = String(member.phone || "").trim();
+  const candidatePhone = String(candidate.phone || "").trim();
+
+  if (phone && candidatePhone) {
+    return phone === candidatePhone;
+  }
+
+  return String(member.name || "").trim().toLowerCase() === String(candidate.name || "").trim().toLowerCase()
+    && String(member.bike || "").trim().toLowerCase() === String(candidate.bike || "").trim().toLowerCase();
+}
+
 function mergeWithDefaultData(savedData) {
   return {
     ...clone(defaultData),
@@ -952,6 +1114,7 @@ function mergeWithDefaultData(savedData) {
     membershipApplications: Array.isArray(savedData.membershipApplications)
       ? savedData.membershipApplications
       : [],
+    gallery: Array.isArray(savedData.gallery) ? savedData.gallery : defaultData.gallery,
     stats: {
       ...defaultData.stats,
       ...(savedData.stats || {})

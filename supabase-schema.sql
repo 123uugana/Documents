@@ -32,6 +32,15 @@ create table if not exists members (
   updated_at timestamptz
 );
 
+create table if not exists gallery (
+  id uuid primary key default gen_random_uuid(),
+  src text not null unique default '',
+  alt text not null default '',
+  caption text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz
+);
+
 create table if not exists users (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -83,3 +92,11 @@ on conflict (id) do nothing;
 insert into contact (id, phone, facebook, instagram)
 values (1, '-', 'Lady Riders Mongolia', 'https://www.instagram.com/lady_riders_mongolia_wmc/')
 on conflict (id) do nothing;
+
+insert into gallery (src, alt, caption)
+values
+  ('/lut.png', 'Motorcycle rider traveling on an open road', 'Зам дээрх эрх чөлөө'),
+  ('/source.jpg', 'Motorcycle parked during a Lady Riders group ride', 'Хамтын аялал'),
+  ('/biker.jpg', 'Close-up view of a motorcycle for rider lifestyle gallery', 'Rider lifestyle'),
+  ('/lADY RIDERS.jpg', 'Lady Riders Mongolia community group moment', 'Lady Riders Mongolia')
+on conflict do nothing;

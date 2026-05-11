@@ -643,6 +643,14 @@ textarea::placeholder {
   transition: color var(--speed) var(--ease), background-color var(--speed) var(--ease);
 }
 
+.gallery-item figcaption span {
+  display: block;
+}
+
+.gallery-item .card-actions {
+  margin-top: 12px;
+}
+
 .gallery-item:hover figcaption {
   color: var(--text);
   background: rgba(8, 9, 13, 0.58);
