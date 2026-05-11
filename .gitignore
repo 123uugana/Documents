@@ -5,3 +5,4 @@ dist
 uploads
 server.err.log
 server.out.log
+.vercel
