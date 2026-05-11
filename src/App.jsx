@@ -85,9 +85,11 @@ export default function App() {
   }
 
   async function createItem(listName, item) {
+    const isFormData = item instanceof FormData;
+
     await apiFetch(`/api/${listName}`, {
       method: "POST",
-      body: JSON.stringify(item)
+      body: isFormData ? item : JSON.stringify(item)
     });
     await loadData();
   }

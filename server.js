@@ -68,6 +68,7 @@ const listNames = ["features", "abouts", "says", "members", "gallery"];
 const adminListNames = ["features", "abouts", "says", "members", "membershipApplications", "gallery"];
 const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
 const allowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+const galleryStorageBucket = "gallery";
 
 const defaultData = {
   stats: {
@@ -442,6 +443,33 @@ app.post("/api/members", asyncRoute(async (request, response) => {
   await saveData(data);
 
   response.status(201).json(member);
+}));
+
+app.post("/api/gallery", requireAdmin, upload.single("image"), asyncRoute(async (request, response) => {
+  await ensureWritableListStorage("gallery");
+
+  const uploadedSrc = request.file ? await uploadGalleryImage(request.file) : "";
+  const src = uploadedSrc || String(request.body.src || "").trim();
+
+  if (!src) {
+    response.status(400).json({ error: "Зураг upload хийх эсвэл зургийн URL оруулна уу." });
+    return;
+  }
+
+  const data = await readData();
+  const caption = String(request.body.caption || "").trim();
+  const item = {
+    id: randomUUID(),
+    src,
+    caption,
+    alt: String(request.body.alt || "").trim() || caption || "Lady Riders Mongolia gallery image",
+    createdAt: new Date().toISOString()
+  };
+
+  data.gallery.unshift(item);
+  await saveData(data);
+
+  response.status(201).json(item);
 }));
 
 app.post("/api/:listName", requireAdmin, asyncRoute(async (request, response) => {
@@ -832,6 +860,44 @@ async function ensureWritableListStorage(listName) {
 
 function getUploadedPath(files, fieldName) {
   return files?.[fieldName]?.[0] ? "" : "";
+}
+
+async function uploadGalleryImage(file) {
+  if (!supabase) {
+    throw new Error("Gallery зураг upload хийхийн тулд Supabase Storage тохиргоо шаардлагатай.");
+  }
+
+  await ensureGalleryStorageBucket();
+
+  const extension = extname(file.originalname).toLowerCase() || ".jpg";
+  const storagePath = `${new Date().toISOString().slice(0, 10)}/${Date.now()}-${randomUUID()}${extension}`;
+  const { error } = await supabase.storage
+    .from(galleryStorageBucket)
+    .upload(storagePath, file.buffer, {
+      contentType: file.mimetype,
+      cacheControl: "31536000",
+      upsert: false
+    });
+
+  throwIfSupabaseError(error);
+
+  const { data } = supabase.storage
+    .from(galleryStorageBucket)
+    .getPublicUrl(storagePath);
+
+  return data.publicUrl;
+}
+
+async function ensureGalleryStorageBucket() {
+  const { error } = await supabase.storage.createBucket(galleryStorageBucket, {
+    public: true,
+    fileSizeLimit: 5 * 1024 * 1024,
+    allowedMimeTypes: allowedImageTypes
+  });
+
+  if (error && !/already exists|resource already exists/i.test(error.message || "")) {
+    throwIfSupabaseError(error);
+  }
 }
 
 function rowToFeature(row) {

@@ -6,23 +6,31 @@ export default function Gallery({ gallery, isAdmin, onAdd, onEdit, onDelete }) {
   const [src, setSrc] = useState("");
   const [caption, setCaption] = useState("");
   const [alt, setAlt] = useState("");
+  const [imageFile, setImageFile] = useState(null);
 
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (!src.trim()) {
+    if (!src.trim() && !imageFile) {
       return;
     }
 
-    await onAdd({
-      src: src.trim(),
-      caption: caption.trim(),
-      alt: alt.trim() || caption.trim() || "Lady Riders Mongolia gallery image"
-    });
+    const formData = new FormData();
+    formData.append("src", src.trim());
+    formData.append("caption", caption.trim());
+    formData.append("alt", alt.trim() || caption.trim() || "Lady Riders Mongolia gallery image");
+
+    if (imageFile) {
+      formData.append("image", imageFile);
+    }
+
+    await onAdd(formData);
 
     setSrc("");
     setCaption("");
     setAlt("");
+    setImageFile(null);
+    event.currentTarget.reset();
   }
 
   async function handleEdit(item) {
@@ -58,11 +66,16 @@ export default function Gallery({ gallery, isAdmin, onAdd, onEdit, onDelete }) {
       {isAdmin && (
         <form className="add-box gallery-add-box" autoComplete="off" onSubmit={handleSubmit}>
           <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(event) => setImageFile(event.target.files?.[0] || null)}
+            aria-label="Gallery image upload"
+          />
+          <input
             value={src}
             onChange={(event) => setSrc(event.target.value)}
-            placeholder="Зургийн URL"
+            placeholder="Эсвэл зургийн URL"
             aria-label="Gallery image URL"
-            required
           />
           <input
             value={caption}
