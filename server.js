@@ -32,6 +32,7 @@ if (!supabase) {
   console.warn("Supabase env vars are not set. Falling back to data.json storage.");
 }
 const isProduction = process.env.NODE_ENV === "production";
+const isVercel = Boolean(process.env.VERCEL);
 const sessionSecret = process.env.SESSION_SECRET || "local-dev-session-secret";
 const adminUsername = process.env.ADMIN_USERNAME || "";
 const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH || "";
@@ -46,7 +47,10 @@ const frontendOriginConfig = process.env.FRONTEND_ORIGINS || [
 ].join(",");
 const frontendOrigins = normalizeOrigins([
   frontendOriginConfig,
-  process.env.RENDER_EXTERNAL_URL || ""
+  process.env.RENDER_EXTERNAL_URL || "",
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "",
+  process.env.VERCEL_BRANCH_URL ? `https://${process.env.VERCEL_BRANCH_URL}` : "",
+  process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : ""
 ].join(","));
 const corsOptions = {
   credentials: true,
@@ -549,9 +553,13 @@ app.use((error, request, response, next) => {
 
 await initializeStorage();
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
+if (!isVercel) {
+  app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+  });
+}
+
+export default app;
 
 async function readData() {
   if (supabase) {
