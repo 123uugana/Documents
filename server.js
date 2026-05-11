@@ -775,7 +775,8 @@ function throwIfSupabaseError(error) {
 }
 
 function isMissingRelationError(error) {
-  return error?.code === "42P01" || /does not exist/i.test(error?.message || "");
+  return ["42P01", "PGRST205"].includes(error?.code)
+    || /does not exist|schema cache/i.test(error?.message || "");
 }
 
 async function initializeStorage() {
