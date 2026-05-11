@@ -28,6 +28,9 @@ const supabase = supabaseUrl && supabaseServiceRoleKey
     }
   })
   : null;
+if (!supabase) {
+  console.warn("Supabase env vars are not set. Falling back to data.json storage.");
+}
 const isProduction = process.env.NODE_ENV === "production";
 const sessionSecret = process.env.SESSION_SECRET || "local-dev-session-secret";
 const adminUsername = process.env.ADMIN_USERNAME || "";
@@ -555,10 +558,6 @@ async function readData() {
     return readDataFromSupabase();
   }
 
-  if (isProduction) {
-    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required in production.");
-  }
-
   try {
     const fileContent = await readFile(dataFile, "utf8");
     const savedData = JSON.parse(fileContent);
@@ -574,10 +573,6 @@ async function saveData(data) {
   if (supabase) {
     await saveDataToSupabase(data);
     return;
-  }
-
-  if (isProduction) {
-    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required in production.");
   }
 
   await mkdir(dirname(dataFile), { recursive: true });
@@ -696,7 +691,7 @@ function throwIfSupabaseError(error) {
 }
 
 async function initializeStorage() {
-  if (!supabase && !isProduction) {
+  if (!supabase) {
     await mkdir(dirname(dataFile), { recursive: true });
   }
   await readData();
